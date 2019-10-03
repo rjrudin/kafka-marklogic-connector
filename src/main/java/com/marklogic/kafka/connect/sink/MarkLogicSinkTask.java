@@ -4,11 +4,15 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
 import com.marklogic.client.document.ServerTransform;
+import com.marklogic.hub.ApplicationConfig;
+import com.marklogic.hub.flow.FlowRunner;
 import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 
 import java.util.Collection;
 import java.util.Map;
@@ -25,11 +29,22 @@ public class MarkLogicSinkTask extends SinkTask {
 	private DataMovementManager dataMovementManager;
 	private WriteBatcher writeBatcher;
 	private SinkRecordConverter sinkRecordConverter;
+	private FlowRunner flowRunner;
 
 	@Override
 	public void start(final Map<String, String> config) {
 		logger.info("Starting");
 
+		new Thread(() -> {
+			System.out.println("STARTING THREAD!!");
+			SpringApplication app = new SpringApplication(SpringConfig.class, ApplicationConfig.class);
+			app.setWebApplicationType(WebApplicationType.NONE);
+			System.out.println("STARTING SPRING!!!");
+			app.run();
+			System.out.println("ITS RUNNING!");
+		}).start();
+
+		System.out.println("CREATING CONVERTER");
 		sinkRecordConverter = new DefaultSinkRecordConverter(config);
 
 		databaseClient = new DefaultDatabaseClientCreator().createDatabaseClient(config);
@@ -46,6 +61,7 @@ public class MarkLogicSinkTask extends SinkTask {
 		dataMovementManager.startJob(writeBatcher);
 
 		logger.info("Started");
+		System.out.println("STARTED!");
 	}
 
 	/**

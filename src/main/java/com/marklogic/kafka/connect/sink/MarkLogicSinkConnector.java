@@ -21,6 +21,7 @@ public class MarkLogicSinkConnector extends SinkConnector {
 
 	@Override
 	public void start(final Map<String, String> arg0) {
+		System.out.println("STARTING CONNECTOR!!!");
 		config = arg0;
 	}
 
@@ -35,6 +36,7 @@ public class MarkLogicSinkConnector extends SinkConnector {
 
 	@Override
 	public List<Map<String, String>> taskConfigs(final int taskCount) {
+		System.out.println("TASK CONFIGS: " + taskCount);
 		final List<Map<String, String>> configs = new ArrayList<>(taskCount);
 		for (int i = 0; i < taskCount; ++i) {
 			configs.add(config);
