@@ -40,7 +40,7 @@ public class MarkLogicSinkConfig extends AbstractConfig {
 	public static ConfigDef CONFIG_DEF = new ConfigDef()
 		.define(CONNECTION_HOST, Type.STRING, Importance.HIGH, "MarkLogic server hostname")
 		.define(CONNECTION_PORT, Type.INT, Importance.HIGH, "The REST app server port to connect to")
-		.define(CONNECTION_DATABASE, Type.STRING, Importance.LOW, "Database to connect, if different from the one associated with the port")
+		.define(CONNECTION_DATABASE, Type.STRING, null, Importance.LOW, "Database to connect, if different from the one associated with the port")
 		.define(CONNECTION_SECURITY_CONTEXT_TYPE, Type.STRING, Importance.HIGH, "Type of MarkLogic security context to create - either digest, basic, kerberos, certificate, or none")
 		.define(CONNECTION_USERNAME, Type.STRING, Importance.HIGH, "Name of MarkLogic user to authenticate as")
 		.define(CONNECTION_PASSWORD, Type.STRING, Importance.HIGH, "Password for the MarkLogic user")

@@ -4,6 +4,8 @@ import com.marklogic.client.DatabaseClient;
 import com.marklogic.client.datamovement.DataMovementManager;
 import com.marklogic.client.datamovement.WriteBatcher;
 import com.marklogic.client.document.ServerTransform;
+import com.marklogic.hub.dmsdk.RunFlowWriteBatchListener;
+import com.marklogic.hub.flow.FlowInputs;
 import com.marklogic.kafka.connect.DefaultDatabaseClientCreator;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
@@ -37,6 +39,15 @@ public class MarkLogicSinkTask extends SinkTask {
 		writeBatcher = dataMovementManager.newWriteBatcher()
 			.withBatchSize(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
 			.withThreadCount(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
+
+		FlowInputs flowInputs = new FlowInputs("persons");
+		RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener(
+			config.get(MarkLogicSinkConfig.CONNECTION_HOST),
+			config.get(MarkLogicSinkConfig.CONNECTION_USERNAME),
+			config.get(MarkLogicSinkConfig.CONNECTION_PASSWORD),
+			flowInputs
+		);
+		writeBatcher.onBatchSuccess(listener);
 
 		ServerTransform transform = buildServerTransform(config);
 		if (transform != null) {
