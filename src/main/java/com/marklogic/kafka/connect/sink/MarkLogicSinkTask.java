@@ -12,6 +12,7 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -40,18 +41,24 @@ public class MarkLogicSinkTask extends SinkTask {
 			.withBatchSize(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_BATCH_SIZE)))
 			.withThreadCount(Integer.valueOf(config.get(MarkLogicSinkConfig.DMSDK_THREAD_COUNT)));
 
-		FlowInputs flowInputs = new FlowInputs("persons");
-		RunFlowWriteBatchListener listener = new RunFlowWriteBatchListener(
-			config.get(MarkLogicSinkConfig.CONNECTION_HOST),
-			config.get(MarkLogicSinkConfig.CONNECTION_USERNAME),
-			config.get(MarkLogicSinkConfig.CONNECTION_PASSWORD),
-			flowInputs
-		);
-		writeBatcher.onBatchSuccess(listener);
-
 		ServerTransform transform = buildServerTransform(config);
 		if (transform != null) {
 			writeBatcher.withTransform(transform);
+		}
+
+		final String flowName = config.get(MarkLogicSinkConfig.DATAHUB_FLOW_NAME);
+		if (flowName != null && flowName.trim().length() > 0) {
+			String logMessage = String.format("After ingest, will run flow '%s'", flowName);
+			FlowInputs flowInputs = new FlowInputs(flowName);
+			final String flowSteps = config.get(MarkLogicSinkConfig.DATAHUB_FLOW_STEPS);
+			if (flowSteps != null) {
+				flowInputs.setSteps(Arrays.asList(flowSteps.split(",")));
+				logMessage += String.format(" with steps '%s'", flowInputs.getSteps().toString());
+			}
+			logger.info(logMessage);
+			// TODO Need control over whether URIs are passed to each step
+			// TODO Oops, need the SecurityAuthContext
+			writeBatcher.onBatchSuccess(new RunFlowWriteBatchListener(databaseClient, flowInputs));
 		}
 
 		dataMovementManager.startJob(writeBatcher);
@@ -69,12 +76,14 @@ public class MarkLogicSinkTask extends SinkTask {
 	protected ServerTransform buildServerTransform(final Map<String, String> config) {
 		String transform = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM);
 		if (transform != null && transform.trim().length() > 0) {
+			logger.info("Using transform: " + transform);
 			ServerTransform t = new ServerTransform(transform);
 			String params = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS);
 			if (params != null && params.trim().length() > 0) {
 				String delimiter = config.get(MarkLogicSinkConfig.DMSDK_TRANSFORM_PARAMS_DELIMITER);
 				if (delimiter != null && delimiter.trim().length() > 0) {
 					String[] tokens = params.split(delimiter);
+					logger.info("Using transform parameters: " + Arrays.asList(tokens));
 					for (int i = 0; i < tokens.length; i += 2) {
 						if (i + 1 >= tokens.length) {
 							throw new IllegalArgumentException(String.format("The value of the %s property does not have an even number of " +

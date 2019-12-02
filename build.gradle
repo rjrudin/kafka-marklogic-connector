@@ -21,9 +21,8 @@ dependencies {
     compileOnly "org.apache.kafka:connect-api:2.1.0"
 
     compile ("com.marklogic:marklogic-data-hub:5.2-SNAPSHOT") {
-//        exclude module: "jdom2"
+        // If not excluded, causes the connector to fail to start
         exclude module: "logback-classic"
-//        exclude module: "marklogic-xcc"
     }
 
     testCompile "org.junit.jupiter:junit-jupiter-api:5.3.0"
